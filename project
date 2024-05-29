@@ -1,0 +1,89 @@
+import yfinance as yf
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+def make_graph(stock_data, revenue_data, stock):
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, subplot_titles=("Historical Share Price", "Historical Revenue"), vertical_spacing = .3)
+    fig.add_trace(go.Scatter(x=pd.to_datetime(stock_data.Date, infer_datetime_format=True), y=stock_data.Close.astype("float"), name="Share Price"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=pd.to_datetime(revenue_data.Date, infer_datetime_format=True), y=revenue_data.Revenue.astype("float"), name="Revenue"), row=2, col=1)
+    fig.update_xaxes(title_text="Date", row=1, col=1)
+    fig.update_xaxes(title_text="Date", row=2, col=1)
+    fig.update_yaxes(title_text="Price ($US)", row=1, col=1)
+    fig.update_yaxes(title_text="Revenue ($US Millions)", row=2, col=1)
+    fig.update_layout(showlegend=False,
+    height=900,
+    title=stock,
+    xaxis_rangeslider_visible=True)
+    fig.show()
+
+
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+pd.set_option('display.width', 1000)
+
+tesla = yf.Ticker("TSLA")
+
+tesla_info = tesla.info
+tesla_info
+
+tesla_data_share_price = tesla.history(period='max')
+tesla_data_share_price.reset_index(inplace=True)
+tesla_data_share_price['Date'] = pd.to_datetime(tesla_data_share_price['Date'])
+tesla_data_share_price['Date'] = tesla_data_share_price['Date'].dt.date
+print(tesla_data_share_price.head())
+
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
+url= ("https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud"
+      "/IBMDeveloperSkillsNetwork-PY0220EN-SkillsNetwork/labs/project/revenue.htm")
+html_data=requests.get(url).text
+
+soup = BeautifulSoup(html_data,"html5lib")
+
+tesla_revenue = pd.read_html(url, match = "Tesla Quarterly Revenue", flavor='bs4')[0]
+
+tesla_revenue.columns = ['Date', 'Revenue']
+tesla_revenue["Revenue"] = tesla_revenue["Revenue"].str.replace(",","").str.replace("$","")
+
+tesla_revenue.dropna(inplace=True)
+print(tesla_revenue.tail())
+
+make_graph(tesla_data_share_price, tesla_revenue, 'Tesla Stock Data Graph')
+
+
+
+gamestop = yf.Ticker("GME")
+
+gamestop_info = gamestop.info
+gamestop_info
+
+gamestop_data_share_price = gamestop.history(period='max')
+gamestop_data_share_price.reset_index(inplace=True)
+gamestop_data_share_price['Date'] = pd.to_datetime(gamestop_data_share_price['Date'])
+gamestop_data_share_price['Date'] = gamestop_data_share_price['Date'].dt.date
+print(gamestop_data_share_price.head())
+
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+
+url= ("https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud"
+      "/IBMDeveloperSkillsNetwork-PY0220EN-SkillsNetwork/labs/project/stock.html")
+html_data=requests.get(url).text
+
+soup = BeautifulSoup(html_data,"html5lib")
+
+gamestop_revenue = pd.read_html(url, match = "GameStop Quarterly Revenue", flavor='bs4')[0]
+
+gamestop_revenue.columns = ['Date', 'Revenue']
+gamestop_revenue["Revenue"] = gamestop_revenue["Revenue"].str.replace(",","").str.replace("$","")
+
+gamestop_revenue.dropna(inplace=True)
+print(gamestop_revenue.tail())
+
+make_graph(gamestop_data_share_price, gamestop_revenue, 'GameStop Stock Data Graph')
